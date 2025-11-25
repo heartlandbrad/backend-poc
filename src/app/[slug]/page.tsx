@@ -1,9 +1,9 @@
 // src/app/[slug]/page.tsx
 
-// Import primary functions from @storyblok/react
+// FIX: Define the required type locally to avoid package import issues
+type ContentVersionKeys = 'draft' | 'published';
+
 import { storyblokInit, getStoryblokApi, StoryblokComponent } from "@storyblok/react";
-// FIX: Import the necessary type from the external package: storyblok-js-client
-import type { StoryblokContentVersionKeys } from "storyblok-js-client"; 
 import React from 'react';
 
 // Define the components map (must match the map in layout.tsx)
@@ -16,7 +16,6 @@ const components = {
 };
 
 // Initialize Storyblok 
-// NOTE: While initialization in layout.tsx is global, it's often included here for robustness
 storyblokInit({
   accessToken: process.env.STORYBLOK_TOKEN, 
   use: [], 
@@ -37,9 +36,9 @@ async function fetchData(slug: string) {
   // Determine the version: 'draft' for development, 'published' otherwise
   const storyVersion = process.env.NODE_ENV === "development" ? "draft" : "published";
 
-  // Define options and explicitly cast 'version' to resolve TypeScript issues
+  // Define options and explicitly cast 'version' to the locally defined type
   const options = {
-    version: storyVersion as StoryblokContentVersionKeys, 
+    version: storyVersion as ContentVersionKeys, // <-- FIX APPLIED HERE
     cv: Date.now(), // Cache-busting for reliable development fetching
   };
 
@@ -64,7 +63,7 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
   const story = await fetchData(fullSlug === 'head' ? 'home' : fullSlug);
   
   if (!story) {
-    // Return a simple message or use Next.js's notFound()
+    // Render a 404 or use Next.js's notFound()
     return <div>Content Not Found (404)</div>;
   }
 
@@ -87,7 +86,7 @@ export async function generateStaticParams() {
     try {
         const { data } = await storyblokApi.get('cdn/links', {
             // Static generation must use the published version
-            version: 'published' as StoryblokContentVersionKeys, 
+            version: 'published' as ContentVersionKeys, // <-- FIX APPLIED HERE
         });
 
         const links = Object.values(data.links); 
