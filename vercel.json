@@ -3,7 +3,7 @@
   "builds": [
     {
       "src": "src/app/index.tsx",
-      "use": "@vercel/platform-next"
+      "command": "next"
     }
   ]
 }
