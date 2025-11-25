@@ -3,8 +3,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css"; 
-// FIX: Import both apiPlugin and storyblokBridge
-import { storyblokInit, apiPlugin, storyblokBridge } from "@storyblok/react"; 
+// CRITICAL FIX: Change import from 'storyblokBridge' to 'useStoryblokBridge'
+import { storyblokInit, apiPlugin, useStoryblokBridge } from "@storyblok/react"; 
 
 // Import all Storyblok components
 import StoryblokPage from "@/components/Storyblok/Page"; 
@@ -25,8 +25,8 @@ const components = {
 // 2. Storyblok Initialization
 storyblokInit({
   accessToken: process.env.STORYBLOK_TOKEN, 
-  // CRITICAL FIX: Add both plugins for full functionality
-  use: [apiPlugin, storyblokBridge], 
+  // FIX APPLIED HERE: Pass the useStoryblokBridge hook function as the plugin
+  use: [apiPlugin, useStoryblokBridge], 
   components, 
 });
 
