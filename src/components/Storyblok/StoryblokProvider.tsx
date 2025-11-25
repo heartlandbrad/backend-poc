@@ -1,7 +1,7 @@
 // src/components/Storyblok/StoryblokProvider.tsx
-'use client'; // <-- This directive is CRUCIAL for Next.js App Router
+'use client'; 
 
-import React, { useEffect } from 'react';
+import React, { useState } from 'react'; // <-- Import useState
 import { useStoryblokBridge } from '@storyblok/react';
 
 // Define the component's props
@@ -16,20 +16,20 @@ interface StoryblokProviderProps {
  */
 const StoryblokProvider: React.FC<StoryblokProviderProps> = ({ story: initialStory, children }) => {
   
-  // 1. Use the useStoryblokBridge hook
-  const [story, setStory] = useStoryblokBridge(initialStory, (newStory) => {
+  // FIX APPLIED HERE: Initialize local state with the story passed from the Server Component
+  const [story, setStory] = useState(initialStory); 
+
+  // Use the useStoryblokBridge hook for the side effect of live updates
+  useStoryblokBridge(story, (newStory) => {
     // This callback runs whenever the content changes in the Visual Editor
     setStory(newStory);
   });
 
-  // 2. Check for the story object before rendering children
-  // This ensures we always render the latest version of the story content
+  // Render the updated content
   if (!story) return null;
 
-  // 3. Clone and pass the updated story object down to children
-  // (In your current setup, this component will wrap the StoryblokComponent)
-  // NOTE: If you are wrapping a complex structure, you might adjust how 'children' is used.
-  // For now, we simply return the children, which will internally use the story state.
+  // Render the children, which will internally use the updated 'story' state 
+  // via the StoryblokComponent render chain.
   return <>{children}</>;
 };
 
