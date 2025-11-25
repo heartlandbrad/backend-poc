@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "index.tsx",
+      "src": "src/app/index.tsx",
       "use": "@vercel/platform-next"
     }
   ]
