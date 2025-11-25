@@ -2,7 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/app/index.tsx"
+      "src": "src/app/index.tsx",
+      "use": "@now/next"
     }
   ]
 }
