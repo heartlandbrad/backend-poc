@@ -1,10 +1,11 @@
 // src/app/[...slug]/page.tsx
 
-// FIX: Define the required type locally to avoid package import issues
+// FIX: Define the required type locally
 type ContentVersionKeys = 'draft' | 'published';
 
 import { storyblokInit, getStoryblokApi, StoryblokComponent } from "@storyblok/react";
 import React from 'react';
+import StoryblokProvider from '@/components/Storyblok/StoryblokProvider'; // <-- NEW IMPORT
 
 // Define the components map (must match the map in layout.tsx)
 const components = {
@@ -62,9 +63,8 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
       if (!story) {
           return <div>Root Content Not Found (404)</div>;
       }
-      return <main><StoryblokComponent blok={story.content} /></main>;
+      return <main><StoryblokProvider story={story}><StoryblokComponent blok={story.content} /></StoryblokProvider></main>;
   }
-
 
   // Fetch data for the story.
   const story = await fetchData(fullSlug);
@@ -75,7 +75,10 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
 
   return (
     <main>
-      <StoryblokComponent blok={story.content} />
+      {/* WRAPPER APPLIED: Pass the fetched story to the client component provider */}
+      <StoryblokProvider story={story}>
+        <StoryblokComponent blok={story.content} />
+      </StoryblokProvider>
     </main>
   );
 }
@@ -93,11 +96,9 @@ export async function generateStaticParams() {
             version: 'published' as ContentVersionKeys,
         });
 
-        // Use nullish coalescing (??) to provide an empty object if data.links is undefined
         const links = Object.values(data.links ?? {}); 
 
         return links
-            // FIX APPLIED HERE: The line is now complete
             .filter((link: any) => link.is_folder === false && link.slug !== 'home')
             .map((link: any) => ({
                 slug: link.slug.split('/'), 

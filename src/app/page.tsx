@@ -1,9 +1,10 @@
 // src/app/page.tsx
 
-// FIX: Define the required type locally to avoid package import issues
+// FIX: Define the required type locally
 type ContentVersionKeys = 'draft' | 'published';
 
 import { getStoryblokApi, StoryblokComponent } from "@storyblok/react";
+import StoryblokProvider from '@/components/Storyblok/StoryblokProvider'; // <-- NEW IMPORT
 
 /**
  * Fetches the story data for the home page from Storyblok.
@@ -15,18 +16,16 @@ async function fetchData() {
     throw new Error("Storyblok API not initialized."); 
   }
 
-  // Determine the version: 'draft' for development, 'published' otherwise
+  // Determine the version: 'draft' for development (for editor), 'published' otherwise
   const storyVersion = process.env.NODE_ENV === "development" ? "draft" : "published";
 
-  // Define options and explicitly cast 'version' to the locally defined type
   const options = {
-    // FIX APPLIED HERE: Type cast the version string
     version: storyVersion as ContentVersionKeys, 
     cv: Date.now(), 
   };
 
   try {
-    // Request the story with the slug 'home' (standard for Storyblok root pages)
+    // Request the story with the slug 'home'
     const { data } = await storyblokApi.get(`cdn/stories/home`, options); 
     return data.story;
   } catch (error) {
@@ -42,13 +41,15 @@ export default async function Home() {
   const story = await fetchData();
   
   if (!story) {
-    return <h1>Home Page Content Error: Check your Storyblok connection or 'home' slug.</h1>;
+    return <h1>Home Page Content Error: Check your Storyblok connection.</h1>;
   }
 
   return (
     <main>
-      {/* This dynamically renders the correct React component */}
-      <StoryblokComponent blok={story.content} />
+      {/* WRAPPER APPLIED: Pass the fetched story to the client component provider */}
+      <StoryblokProvider story={story}>
+        <StoryblokComponent blok={story.content} />
+      </StoryblokProvider>
     </main>
   );
 }
