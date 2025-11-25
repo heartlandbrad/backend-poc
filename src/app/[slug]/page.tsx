@@ -1,17 +1,11 @@
 // src/app/[...slug]/page.tsx
 
-// FIX: Define the required type locally
 type ContentVersionKeys = 'draft' | 'published';
 
-import { storyblokInit, getStoryblokApi, StoryblokComponent } from "@storyblok/react";
+import { storyblokInit, getStoryblokApi } from "@storyblok/react";
 import React from 'react';
-import dynamic from 'next/dynamic'; // <-- NEW IMPORT
-
-// CRITICAL FIX: Dynamically import the client component with SSR disabled
-const StoryblokProvider = dynamic(
-  () => import('@/components/Storyblok/StoryblokProvider'),
-  { ssr: false }
-);
+// FINAL FIX: Standard import of the wrapper, which is a Client Component
+import StoryblokClientWrapper from '@/components/Storyblok/StoryblokClientWrapper'; 
 
 // Define the components map (must match the map in layout.tsx)
 const components = {
@@ -24,7 +18,6 @@ const components = {
 // Initialize Storyblok 
 storyblokInit({
   accessToken: process.env.STORYBLOK_TOKEN, 
-  // IMPORTANT: Only apiPlugin here (bridge is handled by the client component)
   use: [], 
   components,
 });
@@ -69,8 +62,7 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
       if (!story) {
           return <div>Root Content Not Found (404)</div>;
       }
-      // Use the dynamically imported Provider
-      return <main><StoryblokProvider story={story}><StoryblokComponent blok={story.content} /></StoryblokProvider></main>;
+      return <main><StoryblokClientWrapper story={story} /></main>; // Use wrapper
   }
 
   // Fetch data for the story.
@@ -82,10 +74,7 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
 
   return (
     <main>
-      {/* Use the dynamically imported Provider */}
-      <StoryblokProvider story={story}>
-        <StoryblokComponent blok={story.content} />
-      </StoryblokProvider>
+      <StoryblokClientWrapper story={story} /> {/* Use wrapper */}
     </main>
   );
 }
