@@ -1,4 +1,4 @@
-import StoryblokProvider from "@/components/StoryblokProvider";
+import StoryblokProvider from "@/components/Storyblok/StoryblokProvider";
 
 export default function RootLayout({ children }) {
   return (
