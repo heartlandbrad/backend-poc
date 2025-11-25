@@ -1,6 +1,9 @@
 {
   "version": 2,
-  "platforms": {
-    "next": {}
-  }
+  "builds": [
+    {
+      "src": "index.tsx",
+      "use": "@vercel/platform-next"
+    }
+  ]
 }
