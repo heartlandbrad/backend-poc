@@ -1,4 +1,4 @@
-// src/app/[slug]/page.tsx
+// src/app/[...slug]/page.tsx
 
 // FIX: Define the required type locally to avoid package import issues
 type ContentVersionKeys = 'draft' | 'published';
@@ -17,7 +17,9 @@ const components = {
 
 // Initialize Storyblok 
 storyblokInit({
+  // NOTE: Ensure STORYBLOK_TOKEN is set in Vercel settings and .env.local
   accessToken: process.env.STORYBLOK_TOKEN, 
+  // IMPORTANT: apiPlugin must be used in layout.tsx for getStoryblokApi() to work
   use: [], 
   components,
 });
@@ -56,14 +58,29 @@ async function fetchData(slug: string) {
  * This component runs on the server to fetch content.
  */
 export default async function SlugRoute({ params }: { params: { slug: string[] } }) {
-  // Join the dynamic slug array into a path string (e.g., ['about', 'us'] -> 'about/us')
-  const fullSlug = params.slug.join('/'); 
+  
+  // FIX APPLIED HERE: Use nullish coalescing (??) to ensure params.slug is an array
+  const slugArray = params.slug ?? [];
+  const fullSlug = slugArray.join('/'); 
 
-  // The 'home' path is typically the root slug.
-  const story = await fetchData(fullSlug === 'head' ? 'home' : fullSlug);
+  // Handle the root path case: if the slug is empty (which happens if the dynamic
+  // router catches the base URL and the /app/page.tsx doesn't run first)
+  if (fullSlug.length === 0) {
+      // Delegate to the 'home' slug or the root page logic
+      const story = await fetchData('home'); 
+      if (!story) {
+          // If the home story is not found, render a 404
+          return <div>Root Content Not Found (404)</div>;
+      }
+      return <main><StoryblokComponent blok={story.content} /></main>;
+  }
+
+
+  // Fetch data for the story. The 'head' check is removed as it's handled by the new logic.
+  const story = await fetchData(fullSlug);
   
   if (!story) {
-    // Render a 404 or use Next.js's notFound()
+    // Render a 404 or use next/navigation's notFound()
     return <div>Content Not Found (404)</div>;
   }
 
@@ -89,17 +106,9 @@ export async function generateStaticParams() {
             version: 'published' as ContentVersionKeys,
         });
 
-        // FIX APPLIED HERE: Use nullish coalescing (??) to provide an empty object if data.links is undefined
+        // Use nullish coalescing (??) to provide an empty object if data.links is undefined
         const links = Object.values(data.links ?? {}); 
 
         return links
-            .filter((link: any) => link.is_folder === false && link.slug !== 'home')
-            .map((link: any) => ({
-                // Must return an object with the same name as the dynamic segment folder
-                slug: link.slug.split('/'), 
-            }));
-    } catch (error) {
-        console.error("Error generating static params:", error);
-        return [];
-    }
-}
+            // Filter out folders and the default 'home' story
+            .filter((link: any) => link.is_folder === false && link.
