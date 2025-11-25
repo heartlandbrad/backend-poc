@@ -1,8 +1,14 @@
 // src/components/Storyblok/StoryblokProvider.tsx
 'use client'; 
 
-import React, { useState, Suspense } from 'react'; 
-// NOTE: We remove the direct import of useStoryblokBridge here.
+import React, { useState } from 'react'; // <-- Keep useState
+
+// 🚨 CRITICAL FIX: We are going back to the simplest structure possible.
+// We will only use the useStoryblokBridge hook when the component is mounted (client-side).
+// We'll use a local state to hold the hook's function.
+
+let useStoryblokBridge: any;
+let useStoryblokBridgeLoaded = false;
 
 // Define the component's props
 interface StoryblokProviderProps {
@@ -10,45 +16,37 @@ interface StoryblokProviderProps {
   children: React.ReactNode;
 }
 
-// 1. Declare the hook variable outside the component function
-// This variable will hold the actual useStoryblokBridge function
-let useStoryblokBridge: any;
-
-/**
- * StoryblokProvider is a Client Component that enables the Visual Editor 
- * by safely loading the useStoryblokBridge hook only in the browser.
- */
 const StoryblokProvider: React.FC<StoryblokProviderProps> = ({ story: initialStory, children }) => {
   
-  // 2. Conditionally load the hook using 'require' only if 'window' exists.
-  // This bypasses module resolution issues during SSG.
-  if (typeof window !== 'undefined' && !useStoryblokBridge) {
-    try {
-        // Use require() for a non-ESM dynamic import on the client
-        useStoryblokBridge = require('@storyblok/react').useStoryblokBridge;
-    } catch (e) {
-        // Fallback for cases where require() fails in certain environments
-        console.error("Failed to dynamically load useStoryblokBridge:", e);
-    }
-  }
-  
-  // 3. Initialize state and apply the bridge logic only if the hook is available.
+  // Initialize state with the story passed from the Server Component
   const [story, setStory] = useState(initialStory); 
-  let finalStory = initialStory;
-
-  if (useStoryblokBridge) {
-    // If the hook is loaded, we use it to manage the state
-    useStoryblokBridge(story, (newStory: any) => {
-      setStory(newStory);
-    });
-    finalStory = story;
-  }
   
-  if (!finalStory) return null;
+  // Use useEffect to run the client-side code *only after* mounting
+  React.useEffect(() => {
+    // Check if the hook is loaded and the bridge is not yet active
+    if (!useStoryblokBridgeLoaded) {
+      // Use the clean ES Module dynamic import pattern
+      import('@storyblok/react').then((module) => {
+        useStoryblokBridge = module.useStoryblokBridge;
+        useStoryblokBridgeLoaded = true;
+        // Trigger the bridge immediately upon loading
+        module.useStoryblokBridge(story, (newStory: any) => {
+            setStory(newStory);
+        });
+      }).catch(err => {
+          console.error("Failed to load Storyblok Bridge:", err);
+      });
+    } else if (useStoryblokBridge) {
+        // If the hook is already loaded, ensure it runs on subsequent renders (if needed)
+        useStoryblokBridge(story, (newStory: any) => {
+            setStory(newStory);
+        });
+    }
+  }, [initialStory]); // Re-run effect if initial story changes (rare, but safe)
+  
+  // Render the most current state of the story
+  if (!story) return null;
 
-  // 4. Render the children. 
-  // We wrap the content in Suspense since this component might be loaded asynchronously 
-  // by its parent (though less necessary here, it ensures robustness).
   return <>{children}</>;
 };
 
