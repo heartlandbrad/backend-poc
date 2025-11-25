@@ -1,26 +1,32 @@
 // src/app/[slug]/page.tsx
 
-import { storyblokInit, getStoryblokApi, StoryblokComponent, StoryblokContentVersionKeys } from "@storyblok/react";
+// Import primary functions from @storyblok/react
+import { storyblokInit, getStoryblokApi, StoryblokComponent } from "@storyblok/react";
+// FIX: Import the necessary type from the external package: storyblok-js-client
+import type { StoryblokContentVersionKeys } from "storyblok-js-client"; 
 import React from 'react';
 
 // Define the components map (must match the map in layout.tsx)
 const components = {
-  // Using lazy loading for components is a good practice
+  // Using lazy loading for components is a good practice for performance
   page: React.lazy(() => import('@/components/Storyblok/Page')),
   feature: React.lazy(() => import('@/components/Storyblok/Feature')),
   grid: React.lazy(() => import('@/components/Storyblok/Grid')),
   teaser: React.lazy(() => import('@/components/Storyblok/Teaser')),
 };
 
-// Initialize Storyblok if not done in a global layout/wrapper
-// NOTE: While we initialize here, the root layout.tsx initialization is often sufficient.
+// Initialize Storyblok 
+// NOTE: While initialization in layout.tsx is global, it's often included here for robustness
 storyblokInit({
   accessToken: process.env.STORYBLOK_TOKEN, 
   use: [], 
   components,
 });
 
-// Function to fetch the story data
+/**
+ * Fetches the story data from Storyblok based on the provided slug.
+ * @param slug The Storyblok slug (e.g., 'home' or 'blog/my-post')
+ */
 async function fetchData(slug: string) {
   const storyblokApi = getStoryblokApi();
 
@@ -28,13 +34,13 @@ async function fetchData(slug: string) {
     throw new Error("Storyblok API not initialized or API token is missing.");
   }
   
-  // 1. Determine the version
+  // Determine the version: 'draft' for development, 'published' otherwise
   const storyVersion = process.env.NODE_ENV === "development" ? "draft" : "published";
 
-  // 2. Define options and explicitly cast 'version' to resolve Type Error
+  // Define options and explicitly cast 'version' to resolve TypeScript issues
   const options = {
-    version: storyVersion as StoryblokContentVersionKeys, // <-- FIX APPLIED HERE
-    cv: Date.now(), 
+    version: storyVersion as StoryblokContentVersionKeys, 
+    cv: Date.now(), // Cache-busting for reliable development fetching
   };
 
   try {
@@ -46,21 +52,25 @@ async function fetchData(slug: string) {
   }
 }
 
-// Next.js Page Component (Server Component)
+/**
+ * Next.js Dynamic Page Component ([...slug]/page.tsx).
+ * This component runs on the server to fetch content.
+ */
 export default async function SlugRoute({ params }: { params: { slug: string[] } }) {
-  // Joins the slug array into a path string (e.g., ['about', 'us'] becomes 'about/us')
+  // Join the dynamic slug array into a path string (e.g., ['about', 'us'] -> 'about/us')
   const fullSlug = params.slug.join('/'); 
 
-  // Fetch data for the story. The 'home' path is usually the root slug.
+  // The 'head' slug was a placeholder in the initial error, typically 'home' is the root
   const story = await fetchData(fullSlug === 'head' ? 'home' : fullSlug);
   
   if (!story) {
-    // Render a 404 or use next/navigation's notFound()
+    // Return a simple message or use Next.js's notFound()
     return <div>Content Not Found (404)</div>;
   }
 
   return (
     <main>
+      {/* Renders the content structure using the registered components */}
       <StoryblokComponent blok={story.content} />
     </main>
   );
@@ -76,7 +86,7 @@ export async function generateStaticParams() {
 
     try {
         const { data } = await storyblokApi.get('cdn/links', {
-            // FIX APPLIED HERE: Casting 'published'
+            // Static generation must use the published version
             version: 'published' as StoryblokContentVersionKeys, 
         });
 
@@ -85,6 +95,7 @@ export async function generateStaticParams() {
         return links
             .filter((link: any) => link.is_folder === false && link.slug !== 'home')
             .map((link: any) => ({
+                // Must return an object with the same name as the dynamic segment folder
                 slug: link.slug.split('/'), 
             }));
     } catch (error) {
