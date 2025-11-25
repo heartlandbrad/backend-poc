@@ -38,7 +38,7 @@ async function fetchData(slug: string) {
 
   // Define options and explicitly cast 'version' to the locally defined type
   const options = {
-    version: storyVersion as ContentVersionKeys, // <-- FIX APPLIED HERE
+    version: storyVersion as ContentVersionKeys,
     cv: Date.now(), // Cache-busting for reliable development fetching
   };
 
@@ -59,7 +59,7 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
   // Join the dynamic slug array into a path string (e.g., ['about', 'us'] -> 'about/us')
   const fullSlug = params.slug.join('/'); 
 
-  // The 'head' slug was a placeholder in the initial error, typically 'home' is the root
+  // The 'home' path is typically the root slug.
   const story = await fetchData(fullSlug === 'head' ? 'home' : fullSlug);
   
   if (!story) {
@@ -86,10 +86,11 @@ export async function generateStaticParams() {
     try {
         const { data } = await storyblokApi.get('cdn/links', {
             // Static generation must use the published version
-            version: 'published' as ContentVersionKeys, // <-- FIX APPLIED HERE
+            version: 'published' as ContentVersionKeys,
         });
 
-        const links = Object.values(data.links); 
+        // FIX APPLIED HERE: Use nullish coalescing (??) to provide an empty object if data.links is undefined
+        const links = Object.values(data.links ?? {}); 
 
         return links
             .filter((link: any) => link.is_folder === false && link.slug !== 'home')
