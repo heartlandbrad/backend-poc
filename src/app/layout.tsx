@@ -24,7 +24,7 @@ const components = {
 
 // 2. Storyblok Initialization
 storyblokInit({
-  accessToken: process.env.STORYBLOK_TOKEN, 
+  accessToken: process.env.NEXT_PUBLIC_STORYBLOK_TOKEN, 
   // FIX APPLIED HERE: Add apiPlugin to the use array
   use: [apiPlugin], 
   components, 
