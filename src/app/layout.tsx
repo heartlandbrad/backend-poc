@@ -26,8 +26,8 @@ const components = {
 storyblokInit({
   // IMPORTANT: Ensure STORYBLOK_TOKEN is set in your environment variables (.env.local and Vercel)
   accessToken: process.env.STORYBLOK_TOKEN, 
-  use: [], // Add any custom Storyblok plugins here (e.g., Richtext)
-  components,
+  use: [], 
+  components, // Pass the components map
 });
 
 // Next.js metadata for SEO
@@ -49,8 +49,7 @@ export default function RootLayout({
             <p style={{ margin: 0, fontWeight: 'bold' }}>Storyblok Next.js Demo Header</p>
         </header>
 
-        {/* The 'children' prop is where all your page content will be rendered (page.tsx and [...slug]/page.tsx).
-        */}
+        {/* The 'children' prop is where all your page content will be rendered. */}
         {children} 
         
         <footer style={{ padding: '20px', borderTop: '1px solid #ccc', marginTop: '40px', textAlign: 'center' }}>

@@ -1,17 +1,22 @@
-import { storyblokInit, getStoryblokApi, StoryblokComponent } from "@storyblok/react";
+// src/app/[slug]/page.tsx
+
+import { storyblokInit, getStoryblokApi, StoryblokComponent, StoryblokContentVersionKeys } from "@storyblok/react";
 import React from 'react';
 
-// You must define and register your Storyblok components here
+// Define the components map (must match the map in layout.tsx)
 const components = {
+  // Using lazy loading for components is a good practice
   page: React.lazy(() => import('@/components/Storyblok/Page')),
   feature: React.lazy(() => import('@/components/Storyblok/Feature')),
-  // Add all your Storyblok block components here
+  grid: React.lazy(() => import('@/components/Storyblok/Grid')),
+  teaser: React.lazy(() => import('@/components/Storyblok/Teaser')),
 };
 
 // Initialize Storyblok if not done in a global layout/wrapper
+// NOTE: While we initialize here, the root layout.tsx initialization is often sufficient.
 storyblokInit({
-  accessToken: process.env.STORYBLOK_TOKEN, // Use environment variable
-  use: [],
+  accessToken: process.env.STORYBLOK_TOKEN, 
+  use: [], 
   components,
 });
 
@@ -22,11 +27,14 @@ async function fetchData(slug: string) {
   if (!storyblokApi) {
     throw new Error("Storyblok API not initialized or API token is missing.");
   }
+  
+  // 1. Determine the version
+  const storyVersion = process.env.NODE_ENV === "development" ? "draft" : "published";
 
-  // Define options for fetching the content
+  // 2. Define options and explicitly cast 'version' to resolve Type Error
   const options = {
-    version: process.env.NODE_ENV === "development" ? "draft" : "published",
-    cv: Date.now(), // Cache-busting for reliable development fetching
+    version: storyVersion as StoryblokContentVersionKeys, // <-- FIX APPLIED HERE
+    cv: Date.now(), 
   };
 
   try {
@@ -34,7 +42,6 @@ async function fetchData(slug: string) {
     return data.story;
   } catch (error) {
     console.error("Error fetching story:", error);
-    // You might want to throw a notFound() error here for Next.js 404 handling
     return null;
   }
 }
@@ -48,25 +55,18 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
   const story = await fetchData(fullSlug === 'head' ? 'home' : fullSlug);
   
   if (!story) {
-    // This is where you would render a 404 or use next/navigation's notFound()
+    // Render a 404 or use next/navigation's notFound()
     return <div>Content Not Found (404)</div>;
   }
 
-  // IMPORTANT: Since this is a Server Component, we pass the story data to a
-  // Client Component (like StoryblokProvider or a wrapper) if you need the Visual Editor.
-
   return (
     <main>
-      {/* This is where you use the StoryblokComponent, which dynamically renders the 
-        correct React component based on the Storyblok block type.
-      */}
       <StoryblokComponent blok={story.content} />
     </main>
   );
 }
 
 // OPTIONAL: Generate static paths for SSG (Static Site Generation)
-// This makes the pages fast by building them at compile time.
 export async function generateStaticParams() {
     const storyblokApi = getStoryblokApi();
     
@@ -76,17 +76,15 @@ export async function generateStaticParams() {
 
     try {
         const { data } = await storyblokApi.get('cdn/links', {
-            version: 'published',
-            // You might add filter queries here to only get relevant pages
+            // FIX APPLIED HERE: Casting 'published'
+            version: 'published' as StoryblokContentVersionKeys, 
         });
 
-        // The links data is an object, convert it to an array of slugs
         const links = Object.values(data.links); 
 
         return links
             .filter((link: any) => link.is_folder === false && link.slug !== 'home')
             .map((link: any) => ({
-                // Must return an object with the same name as the dynamic segment folder
                 slug: link.slug.split('/'), 
             }));
     } catch (error) {
