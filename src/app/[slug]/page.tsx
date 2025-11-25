@@ -1,23 +1,33 @@
 // src/app/[...slug]/page.tsx
 
+// FIX: Define the required type locally
 type ContentVersionKeys = 'draft' | 'published';
 
 import { storyblokInit, getStoryblokApi } from "@storyblok/react";
 import React from 'react';
-// FINAL FIX: Standard import of the wrapper, which is a Client Component
+// FINAL FIX: Standard import of the client wrapper component
 import StoryblokClientWrapper from '@/components/Storyblok/StoryblokClientWrapper'; 
+
+// CRITICAL FIX: Standard imports for components (stabilizes SSG)
+import StoryblokPage from '@/components/Storyblok/Page'; 
+import StoryblokFeature from '@/components/Storyblok/Feature';
+import StoryblokGrid from '@/components/Storyblok/Grid';
+import StoryblokTeaser from '@/components/Storyblok/Teaser';
+
 
 // Define the components map (must match the map in layout.tsx)
 const components = {
-  page: React.lazy(() => import('@/components/Storyblok/Page')),
-  feature: React.lazy(() => import('@/components/Storyblok/Feature')),
-  grid: React.lazy(() => import('@/components/Storyblok/Grid')),
-  teaser: React.lazy(() => import('@/components/Storyblok/Teaser')),
+  // Use standard imports here
+  page: StoryblokPage,
+  feature: StoryblokFeature,
+  grid: StoryblokGrid,
+  teaser: StoryblokTeaser,
 };
 
 // Initialize Storyblok 
 storyblokInit({
   accessToken: process.env.STORYBLOK_TOKEN, 
+  // IMPORTANT: Only apiPlugin here (bridge is handled by the client component)
   use: [], 
   components,
 });
@@ -62,7 +72,7 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
       if (!story) {
           return <div>Root Content Not Found (404)</div>;
       }
-      return <main><StoryblokClientWrapper story={story} /></main>; // Use wrapper
+      return <main><StoryblokClientWrapper story={story} /></main>; 
   }
 
   // Fetch data for the story.
@@ -74,7 +84,8 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
 
   return (
     <main>
-      <StoryblokClientWrapper story={story} /> {/* Use wrapper */}
+      {/* Renders the Server-Fetched data inside the Client Wrapper */}
+      <StoryblokClientWrapper story={story} /> 
     </main>
   );
 }
