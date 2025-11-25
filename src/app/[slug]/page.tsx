@@ -1,14 +1,12 @@
 // src/app/[...slug]/page.tsx
 
-// FIX: Define the required type locally
 type ContentVersionKeys = 'draft' | 'published';
 
 import { storyblokInit, getStoryblokApi } from "@storyblok/react";
 import React from 'react';
-// FINAL FIX: Standard import of the client wrapper component
 import StoryblokClientWrapper from '@/components/Storyblok/StoryblokClientWrapper'; 
 
-// CRITICAL FIX: Standard imports for components (stabilizes SSG)
+// CRITICAL FIX: Standard imports for components
 import StoryblokPage from '@/components/Storyblok/Page'; 
 import StoryblokFeature from '@/components/Storyblok/Feature';
 import StoryblokGrid from '@/components/Storyblok/Grid';
@@ -17,7 +15,6 @@ import StoryblokTeaser from '@/components/Storyblok/Teaser';
 
 // Define the components map (must match the map in layout.tsx)
 const components = {
-  // Use standard imports here
   page: StoryblokPage,
   feature: StoryblokFeature,
   grid: StoryblokGrid,
@@ -27,7 +24,6 @@ const components = {
 // Initialize Storyblok 
 storyblokInit({
   accessToken: process.env.STORYBLOK_TOKEN, 
-  // IMPORTANT: Only apiPlugin here (bridge is handled by the client component)
   use: [], 
   components,
 });
@@ -84,7 +80,7 @@ export default async function SlugRoute({ params }: { params: { slug: string[] }
 
   return (
     <main>
-      {/* Renders the Server-Fetched data inside the Client Wrapper */}
+      {/* FINAL FIX: Render the Server-Fetched data inside the Client Wrapper */}
       <StoryblokClientWrapper story={story} /> 
     </main>
   );

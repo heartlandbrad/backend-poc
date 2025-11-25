@@ -3,10 +3,16 @@
 
 import StoryblokProvider from './StoryblokProvider';
 import { StoryblokComponent } from '@storyblok/react';
+import React from 'react';
 
-// This component receives the server-fetched story and renders the client provider.
+/**
+ * CRITICAL FIX: This component is a Client Boundary. 
+ * It receives server-fetched data and safely mounts the StoryblokProvider
+ * (which uses client-only hooks) without crashing the server build.
+ */
 export default function StoryblokClientWrapper({ story }: { story: any }) {
-  // It's client-side code now, so rendering the provider is safe.
+  
+  // Renders the component chain safely on the client
   if (!story) return null;
 
   return (
