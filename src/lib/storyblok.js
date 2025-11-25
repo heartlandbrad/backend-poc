@@ -6,7 +6,7 @@ import Teaser from "@/components/Storyblok/Teaser";
 import { apiPlugin, storyblokInit } from "@storyblok/react/rsc";
 
 export const getStoryblokApi = storyblokInit({
-  accessToken: process.env.STORYBLOK_TOKEN
+  accessToken: process.env.STORYBLOK_TOKEN,
   use: [apiPlugin],
   components: {
     page: Page,
