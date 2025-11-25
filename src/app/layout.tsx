@@ -3,7 +3,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css"; 
-import { storyblokInit } from "@storyblok/react";
+// FIX: Import the apiPlugin
+import { storyblokInit, apiPlugin } from "@storyblok/react"; 
 
 // Import all Storyblok components
 import StoryblokPage from "@/components/Storyblok/Page"; 
@@ -15,7 +16,6 @@ const inter = Inter({ subsets: ["latin"] });
 
 // 1. Component Registration
 const components = {
-  // Maps the Storyblok block name (key) to the React component (value)
   page: StoryblokPage,
   feature: StoryblokFeature, 
   grid: StoryblokGrid,
@@ -24,10 +24,10 @@ const components = {
 
 // 2. Storyblok Initialization
 storyblokInit({
-  // IMPORTANT: Ensure STORYBLOK_TOKEN is set in your environment variables (.env.local and Vercel)
   accessToken: process.env.STORYBLOK_TOKEN, 
-  use: [], 
-  components, // Pass the components map
+  // FIX APPLIED HERE: Add apiPlugin to the use array
+  use: [apiPlugin], 
+  components, 
 });
 
 // Next.js metadata for SEO
@@ -49,7 +49,6 @@ export default function RootLayout({
             <p style={{ margin: 0, fontWeight: 'bold' }}>Storyblok Next.js Demo Header</p>
         </header>
 
-        {/* The 'children' prop is where all your page content will be rendered. */}
         {children} 
         
         <footer style={{ padding: '20px', borderTop: '1px solid #ccc', marginTop: '40px', textAlign: 'center' }}>
