@@ -1,4 +1,5 @@
 // src/components/Storyblok/Grid.tsx
+'use client'; // <-- ADD THIS LINE
 
 import { StoryblokComponent, storyblokEditable } from "@storyblok/react";
 import React from 'react';
